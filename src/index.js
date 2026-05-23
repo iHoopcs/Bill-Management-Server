@@ -4,9 +4,11 @@ const cors = require("cors");
 const app = express();
 const port = process.env.PORT || 8080;
 
-//CORS Middleware
-const allowedOrigins = ["http://localhost:4200"];
+const connectDB = require("./configs/database.config");
+const userRoutes = require("./routes/user.routes");
 
+//Middleware
+const allowedOrigins = ["http://localhost:4200"];
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -24,10 +26,30 @@ app.use(
   }),
 );
 
+app.use(express.json());
+
+//Endpoints
 app.get("/api/ping", (req, res) => {
-  res.status(200).json({ status: "SUCCESS", message: "Pinging..." });
+  res.status(200).json({ status: "OK", message: "Pinging..." });
 });
 
-app.listen(port, () => {
-  console.log(`Finance Management Server is running on port ${port}!!!`);
-});
+app.use("/api/users", userRoutes);
+
+app.listen(port, () => {});
+
+// Only start the server and connect to the database when NOT running tests.
+if (process.env.NODE_ENV !== "test") {
+  const startServer = async () => {
+    try {
+      await connectDB();
+      app.listen(PORT, () => {
+        console.log(`Finance Management Server is running on port ${port}!!!`);
+      });
+    } catch (error) {
+      console.error("Failed to start server:", error);
+      process.exit(1);
+    }
+  };
+
+  startServer();
+}
