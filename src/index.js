@@ -35,21 +35,15 @@ app.get("/api/ping", (req, res) => {
 
 app.use("/api/users", userRoutes);
 
-app.listen(port, () => {});
-
-// Only start the server and connect to the database when NOT running tests.
-if (process.env.NODE_ENV !== "test") {
-  const startServer = async () => {
-    try {
-      await connectDB();
-      app.listen(PORT, () => {
-        console.log(`Finance Management Server is running on port ${port}!!!`);
-      });
-    } catch (error) {
-      console.error("Failed to start server:", error);
-      process.exit(1);
-    }
-  };
-
-  startServer();
-}
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(port, () => {
+      console.log(`Finance Management Server is running on port ${port}!!!`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+startServer();
