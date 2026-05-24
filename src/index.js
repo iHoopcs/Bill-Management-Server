@@ -37,15 +37,21 @@ app.get("/api/ping", (req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 
-const startServer = async () => {
-  try {
-    await connectDB();
-    app.listen(port, () => {
-      console.log(`Finance Management Server is running on port ${port}!!!`);
-    });
-  } catch (error) {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  }
-};
-startServer();
+// Export app for testing without binding a port
+module.exports = app;
+
+// Only start the server if this file is run directly (not imported by tests)
+if (require.main === module) {
+  const startServer = async () => {
+    try {
+      await connectDB();
+      app.listen(port, () => {
+        console.log(`Finance Management Server is running on port ${port}!!!`);
+      });
+    } catch (error) {
+      console.error("Failed to start server:", error);
+      process.exit(1);
+    }
+  };
+  startServer();
+}
