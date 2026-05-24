@@ -2,7 +2,7 @@ const Bill = require("../models/Bill");
 const User = require("../models/User");
 
 /**
- * GET /api/bills/:id
+ * GET /api/bills/individual/:id
  * Returns a single bill by ID.
  */
 const getBill = async (req, res) => {
@@ -17,12 +17,12 @@ const getBill = async (req, res) => {
 };
 
 /**
- * GET /api/bills/
- * Returns all bills
+ * GET /api/bills/all/:userId
+ * Returns all bills for a specific user.
  */
 const getAllUserBills = async (req, res) => {
   try {
-    const bills = await Bill.find();
+    const bills = await Bill.find({ user: req.params.userId });
     if (bills.length === 0) return res.status(204).json([]);
     res.status(200).json(bills);
   } catch (error) {
@@ -32,7 +32,7 @@ const getAllUserBills = async (req, res) => {
 };
 
 /**
- * POST /api/bills
+ * POST /api/bills/add
  * Creates a new bill for a user (looked up by email in req.body).
  */
 const addBill = async (req, res) => {
@@ -64,4 +64,4 @@ const addBill = async (req, res) => {
   }
 };
 
-module.exports = { getBill, addBill };
+module.exports = { getBill, addBill, getAllUserBills };

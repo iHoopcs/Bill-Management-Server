@@ -159,16 +159,24 @@ describe("GET /api/users/:email/bills", () => {
     const res = await request(app).get(`/api/users/${user.email}/bills`);
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(2);
-    expect(res.body[0]).toHaveProperty("name", "Test Bill 1");
-    expect(res.body[0]).toHaveProperty("amount", 100);
-    expect(res.body[0]).toHaveProperty("isRecurring", false);
-    expect(res.body[0]).toHaveProperty("recurrence", "monthly");
-    expect(res.body[0]).toHaveProperty("isPaid", false);
-    expect(res.body[1]).toHaveProperty("name", "Test Bill 2");
-    expect(res.body[1]).toHaveProperty("amount", 200);
-    expect(res.body[1]).toHaveProperty("isRecurring", true);
-    expect(res.body[1]).toHaveProperty("recurrence", "weekly");
-    expect(res.body[1]).toHaveProperty("isPaid", true);
+    expect(res.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: "Test Bill 1",
+          amount: 100,
+          isRecurring: false,
+          recurrence: "monthly",
+          isPaid: false,
+        }),
+        expect.objectContaining({
+          name: "Test Bill 2",
+          amount: 200,
+          isRecurring: true,
+          recurrence: "weekly",
+          isPaid: true,
+        }),
+      ]),
+    );
   });
 
   it("should return 200 and empty array if user has no bills", async () => {

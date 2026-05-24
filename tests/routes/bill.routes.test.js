@@ -44,7 +44,7 @@ afterAll(async () => {
 
 // ─── GET /api/bills/:id ───────────────────────────────────────────────────────
 
-describe("GET /api/bills/:id", () => {
+describe("GET /api/bills/individual/:id", () => {
   it("should return 200 and the bill when found", async () => {
     const user = await User.create({
       email: "user1@example.com",
@@ -62,7 +62,7 @@ describe("GET /api/bills/:id", () => {
       isPaid: false,
     });
 
-    const res = await request(app).get(`/api/bills/${bill._id}`);
+    const res = await request(app).get(`/api/bills/individual/${bill._id}`);
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty("name", "Electric");
@@ -76,7 +76,7 @@ describe("GET /api/bills/:id", () => {
     const mongoose = require("mongoose");
     const fakeId = new mongoose.Types.ObjectId();
 
-    const res = await request(app).get(`/api/bills/${fakeId}`);
+    const res = await request(app).get(`/api/bills/individual/${fakeId}`);
 
     expect(res.statusCode).toBe(404);
     expect(res.body).toEqual({ message: "Bill not found" });
@@ -88,7 +88,7 @@ describe("GET /api/bills/:id", () => {
       throw new Error("Database error");
     });
 
-    const res = await request(app).get("/api/bills/someid");
+    const res = await request(app).get("/api/bills/individual/someid");
 
     expect(res.statusCode).toBe(500);
     expect(res.body).toEqual({ message: "Server error" });
@@ -97,7 +97,7 @@ describe("GET /api/bills/:id", () => {
 
 // ─── POST /api/bills ──────────────────────────────────────────────────────────
 
-describe("POST /api/bills", () => {
+describe("POST /api/bills/add", () => {
   it("should return 201 and the created bill on success", async () => {
     const user = await User.create({
       email: "user1@example.com",
@@ -107,7 +107,7 @@ describe("POST /api/bills", () => {
     });
 
     const res = await request(app)
-      .post("/api/bills")
+      .post("/api/bills/add")
       .send({
         email: user.email,
         name: "Internet",
@@ -132,7 +132,7 @@ describe("POST /api/bills", () => {
   });
 
   it("should return 400 if required fields are missing", async () => {
-    const res = await request(app).post("/api/bills").send({
+    const res = await request(app).post("/api/bills/add").send({
       email: "user1@example.com", // missing name, amount, dueDate
     });
 
@@ -142,7 +142,7 @@ describe("POST /api/bills", () => {
 
   it("should return 404 if the user is not found", async () => {
     const res = await request(app)
-      .post("/api/bills")
+      .post("/api/bills/add")
       .send({
         email: "ghost@example.com",
         name: "Rent",
@@ -168,7 +168,7 @@ describe("POST /api/bills", () => {
     });
 
     const res = await request(app)
-      .post("/api/bills")
+      .post("/api/bills/add")
       .send({
         email: user.email,
         name: "Gas",
