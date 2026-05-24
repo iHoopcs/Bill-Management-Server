@@ -32,22 +32,5 @@ const getUser = async (req, res) => {
   }
 };
 
-/**
- * GET /api/users/:email/bills
- * Returns all bills associated with a user.
- */
-const getUserBills = async (req, res) => {
-  try {
-    const user = await User.findOne({ email: req.params.email }).select(
-      "-password",
-    );
-    if (!user) return res.status(404).json({ message: "User not found" });
-    const bills = await Bill.find({ user: user._id });
-    res.status(200).json(bills);
-  } catch (error) {
-    console.error("Error fetching user bills:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-};
 
-module.exports = { getAllUsers, getUser, getUserBills };
+module.exports = { getAllUsers, getUser };

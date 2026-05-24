@@ -13,8 +13,7 @@ const {
   afterEach,
   afterAll,
 } = require("@jest/globals");
-const { getUserBills } = require("../../src/controllers/user.controller");
-const { getBill, addBill } = require("../../src/controllers/bill.controller");
+const { getBill, addBill, getAllUserBills } = require("../../src/controllers/bill.controller");
 const User = require("../../src/models/User");
 const Bill = require("../../src/models/Bill");
 const db = require("../helpers/db");
@@ -63,10 +62,10 @@ describe("getAllUserBills", () => {
       firstName: "Test",
       lastName: "User",
     });
-    const req = mockReq({ params: { email: user.email } });
+    const req = mockReq({ params: { userId: user._id.toString() } });
     const res = mockRes();
 
-    await getUserBills(req, res);
+    await getAllUserBills(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith([]);
@@ -101,10 +100,10 @@ describe("getAllUserBills", () => {
       },
     ]);
 
-    const req = mockReq({ params: { email: user.email } });
+    const req = mockReq({ params: { userId: user._id.toString() } });
     const res = mockRes();
 
-    await getUserBills(req, res);
+    await getAllUserBills(req, res);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
@@ -130,10 +129,11 @@ describe("getAllUserBills", () => {
   });
 
   it("should return 404 if user is not found", async () => {
-    const req = mockReq({ params: { email: "nonexistent@example.com" } });
+    const mongoose = require("mongoose");
+    const req = mockReq({ params: { userId: new mongoose.Types.ObjectId().toString() } });
     const res = mockRes();
 
-    await getUserBills(req, res);
+    await getAllUserBills(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ message: "User not found" });

@@ -1,7 +1,7 @@
 /**
  * User Controller Unit Tests
  *
- * Tests the getAllUsers, getUser, and getUserBills controller functions directly,
+ * Tests the getAllUsers and getUser controller functions directly,
  * mocking the HTTP request/response objects with no real HTTP layer involved.
  * Uses an in-memory MongoDB instance — never touches the real database.
  */
@@ -16,7 +16,6 @@ const {
 const {
   getAllUsers,
   getUser,
-  getUserBills,
 } = require("../../src/controllers/user.controller");
 const User = require("../../src/models/User");
 const Bill = require("../../src/models/Bill");
@@ -158,79 +157,6 @@ describe("getUser controller", () => {
     const res = mockRes();
 
     await getUser(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({ message: "Server error" });
-  });
-});
-
-// ─── getUserBills ─────────────────────────────────────────────────────────────
-
-describe("getUserBills controller", () => {
-  it("should return 200 and the user's populated bills", async () => {
-    const user = await User.create({
-      email: "user@example.com",
-      password: "hashedpassword",
-      firstName: "Jane",
-      lastName: "Doe",
-    });
-    await Bill.create({
-      user: user._id,
-      name: "Internet",
-      amount: 65,
-      dueDate: new Date("2026-06-15"),
-      isRecurring: true,
-      recurrence: "monthly",
-    });
-
-    const req = mockReq({ params: { email: user.email } });
-    const res = mockRes();
-
-    await getUserBills(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    const [returnedBills] = res.json.mock.calls[0];
-    expect(returnedBills).toHaveLength(1);
-    expect(returnedBills[0].name).toBe("Internet");
-  });
-
-  it("should return 200 with an empty array if user has no bills", async () => {
-    await User.create({
-      email: "user@example.com",
-      password: "hashedpassword",
-      firstName: "Jane",
-      lastName: "Doe",
-    });
-
-    const req = mockReq({ params: { email: "user@example.com" } });
-    const res = mockRes();
-
-    await getUserBills(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith([]);
-  });
-
-  it("should return 404 if user is not found", async () => {
-    const req = mockReq({ params: { email: "ghost@example.com" } });
-    const res = mockRes();
-
-    await getUserBills(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
-  });
-
-  it("should return 500 on database error", async () => {
-    jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(User, "findOne").mockImplementation(() => {
-      throw new Error("Database error");
-    });
-
-    const req = mockReq({ params: { email: "user@example.com" } });
-    const res = mockRes();
-
-    await getUserBills(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ message: "Server error" });

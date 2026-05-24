@@ -22,8 +22,9 @@ const getBill = async (req, res) => {
  */
 const getAllUserBills = async (req, res) => {
   try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
     const bills = await Bill.find({ user: req.params.userId });
-    if (bills.length === 0) return res.status(204).json([]);
     res.status(200).json(bills);
   } catch (error) {
     console.error("Error fetching bills:", error);
