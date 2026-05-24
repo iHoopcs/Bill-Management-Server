@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Bill = require("../models/Bill");
 
 /**
  * GET /api/users
@@ -37,11 +38,12 @@ const getUser = async (req, res) => {
  */
 const getUserBills = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.params.email })
-      .select("-password")
-      .populate("bills");
+    const user = await User.findOne({ email: req.params.email }).select(
+      "-password",
+    );
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.status(200).json(user.bills);
+    const bills = await Bill.find({ user: user._id });
+    res.status(200).json(bills);
   } catch (error) {
     console.error("Error fetching user bills:", error);
     res.status(500).json({ message: "Server error" });

@@ -7,6 +7,7 @@ const port = process.env.PORT || 8080;
 const connectDB = require("./configs/database.config");
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
+const billRoutes = require("./routes/bill.routes");
 
 //Middleware
 const allowedOrigins = ["http://localhost:4200"];
@@ -36,6 +37,7 @@ app.get("/api/ping", (req, res) => {
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/bills", billRoutes);
 
 // Export app for testing without binding a port
 module.exports = app;

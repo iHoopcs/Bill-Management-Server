@@ -130,9 +130,15 @@ describe("GET /api/users/:email", () => {
 // ─── GET /api/users/:email/bills ─────────────────────────────────────────────
 describe("GET /api/users/:email/bills", () => {
   it("should return 200 and bills associated with a user", async () => {
-    // User.bills stores ObjectId refs — create Bill docs first
-    const [bill1, bill2] = await Bill.create([
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+    await Bill.create([
       {
+        user: user._id,
         name: "Test Bill 1",
         amount: 100,
         dueDate: new Date(),
@@ -141,6 +147,7 @@ describe("GET /api/users/:email/bills", () => {
         isPaid: false,
       },
       {
+        user: user._id,
         name: "Test Bill 2",
         amount: 200,
         dueDate: new Date(),
@@ -149,13 +156,6 @@ describe("GET /api/users/:email/bills", () => {
         isPaid: true,
       },
     ]);
-    const user = await User.create({
-      email: "user1@example.com",
-      password: "password1",
-      firstName: "User",
-      lastName: "One",
-      bills: [bill1._id, bill2._id],
-    });
     const res = await request(app).get(`/api/users/${user.email}/bills`);
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveLength(2);
@@ -171,13 +171,12 @@ describe("GET /api/users/:email/bills", () => {
     expect(res.body[1]).toHaveProperty("isPaid", true);
   });
 
-  it("should return 204 and empty array if user has no bills", async () => {
+  it("should return 200 and empty array if user has no bills", async () => {
     await User.create({
       email: "user2@example.com",
       password: "password2",
       firstName: "User",
       lastName: "Two",
-      bills: [], // Explicitly set bills to an empty array
     });
     const res = await request(app).get("/api/users/user2@example.com/bills");
     expect(res.statusCode).toBe(200);

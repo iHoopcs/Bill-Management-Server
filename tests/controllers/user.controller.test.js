@@ -168,20 +168,19 @@ describe("getUser controller", () => {
 
 describe("getUserBills controller", () => {
   it("should return 200 and the user's populated bills", async () => {
-    // Create a bill first, then associate it with the user
-    const bill = await Bill.create({
-      name: "Internet",
-      amount: 65,
-      dueDate: new Date("2026-06-15"),
-      isRecurring: true,
-      recurrence: "monthly",
-    });
     const user = await User.create({
       email: "user@example.com",
       password: "hashedpassword",
       firstName: "Jane",
       lastName: "Doe",
-      bills: [bill._id],
+    });
+    await Bill.create({
+      user: user._id,
+      name: "Internet",
+      amount: 65,
+      dueDate: new Date("2026-06-15"),
+      isRecurring: true,
+      recurrence: "monthly",
     });
 
     const req = mockReq({ params: { email: user.email } });
@@ -201,7 +200,6 @@ describe("getUserBills controller", () => {
       password: "hashedpassword",
       firstName: "Jane",
       lastName: "Doe",
-      bills: [],
     });
 
     const req = mockReq({ params: { email: "user@example.com" } });

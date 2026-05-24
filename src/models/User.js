@@ -22,13 +22,6 @@ const UserSchema = new Schema(
       type: String,
       trim: true,
     },
-    bills: [
-        {
-            type: Schema.Types.ObjectId, 
-            ref: "Bill", 
-            required: true
-        }
-    ]
   },
   {
     timestamps: true,
