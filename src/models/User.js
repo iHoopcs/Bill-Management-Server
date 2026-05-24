@@ -3,12 +3,6 @@ const Schema = mongoose.Schema;
 
 const UserSchema = new Schema(
   {
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
     email: {
       type: String,
       required: true,
@@ -28,6 +22,13 @@ const UserSchema = new Schema(
       type: String,
       trim: true,
     },
+    bills: [
+        {
+            type: Schema.Types.ObjectId, 
+            ref: "Bill", 
+            required: true
+        }
+    ]
   },
   {
     timestamps: true,

@@ -3,11 +3,6 @@ const Schema = mongoose.Schema;
 
 const BillSchema = new Schema(
   {
-    user: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
     name: {
       type: String,
       required: true,
