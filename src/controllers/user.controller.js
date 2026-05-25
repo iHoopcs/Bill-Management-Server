@@ -21,7 +21,8 @@ const getAllUsers = async (req, res) => {
  */
 const getUser = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.params.email }).select(
+    const normalizedEmail = req.params.email.trim().toLowerCase();
+    const user = await User.findOne({ email: normalizedEmail }).select(
       "-password",
     );
     if (!user) return res.status(404).json({ message: "User not found" });
