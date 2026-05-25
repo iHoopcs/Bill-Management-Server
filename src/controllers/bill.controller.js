@@ -34,16 +34,11 @@ const getAllUserBills = async (req, res) => {
 
 /**
  * POST /api/bills/add
- * Creates a new bill for a user (looked up by email in req.body).
+ * Creates a new bill for the authenticated user (user taken from req.user).
  */
 const addBill = async (req, res) => {
   try {
-    const { email, name, amount, dueDate, isRecurring, recurrence, isPaid } =
-      req.body;
-
-    // Normalize email to lowercase and trim whitespace
-    const normalizedEmail =
-      typeof email === "string" ? email.trim().toLowerCase() : email;
+    const { name, amount, dueDate, isRecurring, recurrence, isPaid } = req.body;
 
     // Validate amount is a number and is non-negative
     const parsedAmount = Number(amount);
@@ -53,14 +48,11 @@ const addBill = async (req, res) => {
     if (!Number.isFinite(parsedAmount) || parsedAmount < 0)
       return res.status(400).json({ message: "Invalid amount" });
 
-    if (!email || !name || !amount || !dueDate)
+    if (!name || !amount || !dueDate)
       return res.status(400).json({ message: "Missing required fields" });
 
-    const user = await User.findOne({ email: normalizedEmail });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
     const bill = await Bill.create({
-      user: user._id,
+      user: req.user._id,
       name,
       amount: parsedAmount,
       dueDate,

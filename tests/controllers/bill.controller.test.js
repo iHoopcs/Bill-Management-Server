@@ -30,7 +30,11 @@ const db = require("../helpers/db");
  * Creates a mock Express req object.
  * Accepts both body and params to match real Express request shape.
  */
-const mockReq = ({ body = {}, params = {} } = {}) => ({ body, params });
+const mockReq = ({ body = {}, params = {}, user = {} } = {}) => ({
+  body,
+  params,
+  user,
+});
 
 /**
  * Creates a mock Express res object that captures status and JSON responses.
@@ -226,8 +230,8 @@ describe("addBill", () => {
     });
 
     const req = mockReq({
+      user: { _id: user._id },
       body: {
-        email: user.email,
         name: "Internet",
         amount: 50,
         dueDate: new Date("2026-06-10"),
@@ -253,11 +257,15 @@ describe("addBill", () => {
   });
 
   it("should return 400 if required fields are missing: name, dueDate", async () => {
+    const user = await User.create({
+      email: "test@example.com",
+      password: "password123",
+      firstName: "Test",
+      lastName: "User",
+    });
     const req = mockReq({
-      body: {
-        email: "test@example.com",
-        amount: 100,
-      }, // missing name, dueDate
+      user: { _id: user._id },
+      body: { amount: 100 }, // missing name, dueDate
     });
     const res = mockRes();
 
@@ -270,11 +278,17 @@ describe("addBill", () => {
   });
 
   it("should return 400 if amount is invalid", async () => {
+    const user = await User.create({
+      email: "test@example.com",
+      password: "password123",
+      firstName: "Test",
+      lastName: "User",
+    });
     const req = mockReq({
+      user: { _id: user._id },
       body: {
-        email: "test@example.com",
         name: "Test Bill",
-        amount: "not-a-number", // invalid amount
+        amount: "not-a-number",
         dueDate: new Date("2026-06-01"),
       },
     });
@@ -286,23 +300,6 @@ describe("addBill", () => {
     expect(res.json).toHaveBeenCalledWith({
       message: "Amount must be a number",
     });
-  });
-
-  it("should return 404 if the user is not found", async () => {
-    const req = mockReq({
-      body: {
-        email: "ghost@example.com",
-        name: "Rent",
-        amount: 1200,
-        dueDate: new Date("2026-06-01"),
-      },
-    });
-    const res = mockRes();
-
-    await addBill(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith({ message: "User not found" });
   });
 
   it("should return 500 on a server error", async () => {
@@ -319,8 +316,8 @@ describe("addBill", () => {
     });
 
     const req = mockReq({
+      user: { _id: user._id },
       body: {
-        email: user.email,
         name: "Gas",
         amount: 30,
         dueDate: new Date("2026-06-01"),

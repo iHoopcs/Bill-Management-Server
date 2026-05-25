@@ -16,14 +16,12 @@ const getAllUsers = async (req, res) => {
 };
 
 /**
- * GET /api/users/:email
- * Returns a single user by email (excluding password).
+ * GET /api/users/me
+ * Returns the authenticated user's profile (excluding password).
  */
 const getUser = async (req, res) => {
   try {
-    const user = await User.findOne({ email: req.params.email }).select(
-      "-password",
-    );
+    const user = await User.findById(req.user._id).select("-password");
     if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json(user);
   } catch (error) {
@@ -31,6 +29,5 @@ const getUser = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 module.exports = { getAllUsers, getUser };

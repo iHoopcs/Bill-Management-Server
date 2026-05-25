@@ -18,9 +18,13 @@ const User = require("../../src/models/User");
 const Bill = require("../../src/models/Bill");
 const db = require("../helpers/db");
 
-// Bypass JWT auth — authentication is covered by auth.routes.test.js
+// Bypass JWT auth — attaches req.user from x-test-user-id header for protected route tests
 jest.mock("../../src/middleware/auth.middleware", () => ({
-  protect: (req, res, next) => next(),
+  protect: (req, res, next) => {
+    const userId = req.headers["x-test-user-id"];
+    if (userId) req.user = { _id: userId };
+    next();
+  },
   authLimiter: (req, res, next) => next(),
 }));
 
@@ -286,8 +290,8 @@ describe("POST /api/bills/add", () => {
 
     const res = await request(app)
       .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
       .send({
-        email: user.email,
         name: "Internet",
         amount: 50,
         dueDate: new Date("2026-06-10"),
@@ -310,10 +314,17 @@ describe("POST /api/bills/add", () => {
   });
 
   it("should return 400 if required fields are missing: name, dueDate", async () => {
-    const res = await request(app).post("/api/bills/add").send({
+    const user = await User.create({
       email: "user1@example.com",
-      amount: 100, // missing name, dueDate
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
     });
+
+    const res = await request(app)
+      .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
+      .send({ amount: 100 }); // missing name, dueDate
 
     expect(res.statusCode).toBe(400);
     expect(res.body).toEqual({ message: "Missing required fields" });
@@ -329,29 +340,15 @@ describe("POST /api/bills/add", () => {
 
     const res = await request(app)
       .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
       .send({
-        email: user.email,
         name: "Test Bill",
-        amount: "not-a-number", // invalid amount
+        amount: "not-a-number",
         dueDate: new Date("2026-06-01"),
       });
 
     expect(res.statusCode).toBe(400);
     expect(res.body).toEqual({ message: "Amount must be a number" });
-  });
-
-  it("should return 404 if the user is not found", async () => {
-    const res = await request(app)
-      .post("/api/bills/add")
-      .send({
-        email: "ghost@example.com",
-        name: "Rent",
-        amount: 1200,
-        dueDate: new Date("2026-06-01"),
-      });
-
-    expect(res.statusCode).toBe(404);
-    expect(res.body).toEqual({ message: "User not found" });
   });
 
   it("should return 500 on a server error", async () => {
@@ -369,8 +366,8 @@ describe("POST /api/bills/add", () => {
 
     const res = await request(app)
       .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
       .send({
-        email: user.email,
         name: "Gas",
         amount: 30,
         dueDate: new Date("2026-06-01"),

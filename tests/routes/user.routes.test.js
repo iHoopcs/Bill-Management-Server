@@ -18,9 +18,14 @@ const User = require("../../src/models/User");
 const Bill = require("../../src/models/Bill");
 const db = require("../helpers/db");
 
-// Bypass JWT auth — authentication is covered by auth.routes.test.js
+// Bypass JWT auth — attaches req.user from x-test-user-id header for protected route tests.
+// Only sets _id (mirrors a decoded JWT payload); the controller is responsible for any DB lookup.
 jest.mock("../../src/middleware/auth.middleware", () => ({
-  protect: (req, res, next) => next(),
+  protect: (req, res, next) => {
+    const userId = req.headers["x-test-user-id"];
+    if (userId) req.user = { _id: userId };
+    next();
+  },
   authLimiter: (req, res, next) => next(),
 }));
 
@@ -89,40 +94,55 @@ describe("GET /api/users", () => {
   });
 });
 
-// ─── GET /api/users/:email ──────────────────────────────────────────────────
-describe("GET /api/users/:email", () => {
-  it("should return a user by email without password", async () => {
-    await User.create({
+// ─── GET /api/users/me ───────────────────────────────────────────────────────
+describe("GET /api/users/me", () => {
+  it("should return the authenticated user's profile without password", async () => {
+    const user = await User.create({
       email: "user1@example.com",
       password: "password1",
       firstName: "User",
       lastName: "One",
     });
 
-    const res = await request(app).get("/api/users/user1@example.com");
+    const res = await request(app)
+      .get("/api/users/me")
+      .set("x-test-user-id", user._id.toString());
 
     expect(res.statusCode).toBe(200);
     expect(res.body.email).toBe("user1@example.com");
     expect(res.body.password).toBeUndefined();
   });
 
-  it("should return 404 if user is not found", async () => {
-    const res = await request(app).get("/api/users/nonexistent@example.com");
+  it("should return 404 if the user no longer exists in the DB", async () => {
+    const { Types } = require("mongoose");
+    const res = await request(app)
+      .get("/api/users/me")
+      .set("x-test-user-id", new Types.ObjectId().toString());
+
     expect(res.statusCode).toBe(404);
     expect(res.body).toEqual({ message: "User not found" });
   });
 
   it("should return 500 if there is a server error", async () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(User, "findOne").mockImplementation(() => {
+    jest.spyOn(User, "findById").mockImplementation(() => {
       throw new Error("Database error");
     });
 
-    const res = await request(app).get("/api/users/user1@example.com");
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+
+    const res = await request(app)
+      .get("/api/users/me")
+      .set("x-test-user-id", user._id.toString());
 
     expect(res.statusCode).toBe(500);
     expect(res.body).toEqual({ message: "Server error" });
     console.error.mockRestore();
-    User.findOne.mockRestore();
+    User.findById.mockRestore();
   });
 });

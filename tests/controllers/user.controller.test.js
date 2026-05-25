@@ -26,7 +26,11 @@ const db = require("../helpers/db");
  * Creates a mock Express req object.
  * Accepts both body and params to match real Express request shape.
  */
-const mockReq = ({ body = {}, params = {} } = {}) => ({ body, params });
+const mockReq = ({ body = {}, params = {}, user = {} } = {}) => ({
+  body,
+  params,
+  user,
+});
 
 /**
  * Creates a mock Express res object that captures status and JSON responses.
@@ -115,16 +119,15 @@ describe("getAllUsers controller", () => {
 // ─── getUser ──────────────────────────────────────────────────────────────────
 
 describe("getUser controller", () => {
-  it("should return 200 and the user data without password", async () => {
-    await User.create({
+  it("should return 200 and the authenticated user's data without password", async () => {
+    const user = await User.create({
       email: "user@example.com",
       password: "hashedpassword",
       firstName: "Jane",
       lastName: "Doe",
     });
 
-    // Controller looks up by req.params.email
-    const req = mockReq({ params: { email: "user@example.com" } });
+    const req = mockReq({ user: { _id: user._id } });
     const res = mockRes();
 
     await getUser(req, res);
@@ -136,8 +139,9 @@ describe("getUser controller", () => {
     expect(returnedUser.password).toBeUndefined();
   });
 
-  it("should return 404 if user is not found", async () => {
-    const req = mockReq({ params: { email: "ghost@example.com" } });
+  it("should return 404 if the user no longer exists in the DB", async () => {
+    const { Types } = require("mongoose");
+    const req = mockReq({ user: { _id: new Types.ObjectId() } });
     const res = mockRes();
 
     await getUser(req, res);
@@ -148,11 +152,12 @@ describe("getUser controller", () => {
 
   it("should return 500 on database error", async () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
-    jest.spyOn(User, "findOne").mockImplementation(() => {
+    jest.spyOn(User, "findById").mockImplementation(() => {
       throw new Error("Database error");
     });
 
-    const req = mockReq({ params: { email: "user@example.com" } });
+    const { Types } = require("mongoose");
+    const req = mockReq({ user: { _id: new Types.ObjectId() } });
     const res = mockRes();
 
     await getUser(req, res);

@@ -9,6 +9,6 @@ const { getAllUsers, getUser } = require("../controllers/user.controller");
 const { protect } = require("../middleware/auth.middleware");
 
 router.get("/", protect, getAllUsers);
-router.get("/:email", protect, getUser);
+router.get("/me", protect, getUser);
 
 module.exports = router;
