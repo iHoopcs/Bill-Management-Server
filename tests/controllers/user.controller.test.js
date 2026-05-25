@@ -18,7 +18,6 @@ const {
   getUser,
 } = require("../../src/controllers/user.controller");
 const User = require("../../src/models/User");
-const Bill = require("../../src/models/Bill");
 const db = require("../helpers/db");
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────

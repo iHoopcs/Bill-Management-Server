@@ -23,7 +23,6 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
       firstName,
       lastName,
-      bills: [], // Initialize bills as an empty array
     });
 
     await newUser.save();
