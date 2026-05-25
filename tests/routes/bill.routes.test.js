@@ -1,0 +1,379 @@
+/**
+ * Bill Routes Integration Tests
+ *
+ * Tests the full HTTP request/response cycle for the bill endpoints.
+ * Uses Supertest to fire real HTTP requests against the Express app
+ * and an in-memory MongoDB instance — never touches the real database.
+ */
+const {
+  describe,
+  it,
+  expect,
+  beforeAll,
+  afterEach,
+  afterAll,
+} = require("@jest/globals");
+const request = require("supertest");
+const User = require("../../src/models/User");
+const Bill = require("../../src/models/Bill");
+const db = require("../helpers/db");
+
+// Bypass JWT auth — attaches req.user from x-test-user-id header for protected route tests
+jest.mock("../../src/middleware/auth.middleware", () => ({
+  protect: (req, res, next) => {
+    const userId = req.headers["x-test-user-id"];
+    if (userId) req.user = { _id: userId };
+    next();
+  },
+  authLimiter: (req, res, next) => next(),
+}));
+
+const app = require("../../src/index");
+
+// ─── Setup / Teardown ─────────────────────────────────────────────────────────
+
+beforeAll(async () => {
+  process.env.JWT_SECRET = "test_jwt_secret";
+  await db.connect();
+});
+
+afterEach(async () => {
+  await db.clearDatabase();
+  jest.restoreAllMocks();
+});
+
+afterAll(async () => {
+  await db.disconnect();
+});
+
+// ─── GET /api/bills/:id ───────────────────────────────────────────────────────
+
+describe("GET /api/bills/individual/:id", () => {
+  it("should return 200 and the bill when found", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+    const bill = await Bill.create({
+      user: user._id,
+      name: "Electric",
+      amount: 75,
+      dueDate: new Date("2026-06-01"),
+      isRecurring: true,
+      recurrence: "monthly",
+      isPaid: false,
+    });
+
+    const res = await request(app).get(`/api/bills/individual/${bill._id}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("name", "Electric");
+    expect(res.body).toHaveProperty("amount", 75);
+    expect(res.body).toHaveProperty("isRecurring", true);
+    expect(res.body).toHaveProperty("recurrence", "monthly");
+    expect(res.body).toHaveProperty("isPaid", false);
+  });
+
+  it("should return 404 if the bill is not found", async () => {
+    const mongoose = require("mongoose");
+    const fakeId = new mongoose.Types.ObjectId();
+
+    const res = await request(app).get(`/api/bills/individual/${fakeId}`);
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toEqual({ message: "Bill not found" });
+  });
+
+  it("should return 500 on a server error", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(Bill, "findById").mockImplementation(() => {
+      throw new Error("Database error");
+    });
+
+    const res = await request(app).get("/api/bills/individual/someid");
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual({ message: "Server error" });
+  });
+});
+
+// ─── GET /api/bills/all/:userId ──────────────────────────────────────────────
+
+describe("GET /api/bills/all/:userId", () => {
+  it("should return 200 and all bills for a user", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+    await Bill.create([
+      {
+        user: user._id,
+        name: "Rent",
+        amount: 1200,
+        dueDate: new Date("2026-06-01"),
+        isRecurring: true,
+        recurrence: "monthly",
+        isPaid: false,
+      },
+      {
+        user: user._id,
+        name: "Internet",
+        amount: 50,
+        dueDate: new Date("2026-06-05"),
+        isRecurring: true,
+        recurrence: "monthly",
+        isPaid: false,
+      },
+    ]);
+
+    const res = await request(app).get(`/api/bills/all/${user._id}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveLength(2);
+    expect(res.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: "Rent", amount: 1200 }),
+        expect.objectContaining({ name: "Internet", amount: 50 }),
+      ]),
+    );
+  });
+
+  it("should return 200 and empty array if user has no bills", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+
+    const res = await request(app).get(`/api/bills/all/${user._id}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("should return 404 if the user is not found", async () => {
+    const mongoose = require("mongoose");
+    const fakeId = new mongoose.Types.ObjectId();
+
+    const res = await request(app).get(`/api/bills/all/${fakeId}`);
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toEqual({ message: "User not found" });
+  });
+});
+
+// ─── PUT /api/bills/update/:id ────────────────────────────────────────────────
+
+describe("PUT /api/bills/update/:id", () => {
+  it("should return 200 and the updated bill on success", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+    const bill = await Bill.create({
+      user: user._id,
+      name: "Old Name",
+      amount: 100,
+      dueDate: new Date("2026-06-01"),
+      isRecurring: false,
+      recurrence: "monthly",
+      isPaid: false,
+    });
+
+    const res = await request(app)
+      .put(`/api/bills/update/${bill._id}`)
+      .send({ name: "New Name", amount: 150, isPaid: true });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("name", "New Name");
+    expect(res.body).toHaveProperty("amount", 150);
+    expect(res.body).toHaveProperty("isPaid", true);
+  });
+
+  it("should return 404 if the bill is not found", async () => {
+    const mongoose = require("mongoose");
+    const fakeId = new mongoose.Types.ObjectId();
+
+    const res = await request(app)
+      .put(`/api/bills/update/${fakeId}`)
+      .send({ name: "Updated" });
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toEqual({ message: "Bill not found" });
+  });
+
+  it("should return 500 on a server error", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(Bill, "findByIdAndUpdate").mockImplementation(() => {
+      throw new Error("Database error");
+    });
+
+    const res = await request(app)
+      .put("/api/bills/update/someid")
+      .send({ name: "Updated" });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual({ message: "Server error" });
+  });
+});
+
+// ─── DELETE /api/bills/delete/:id ─────────────────────────────────────────────
+
+describe("DELETE /api/bills/delete/:id", () => {
+  it("should return 200 and a success message on deletion", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+    const bill = await Bill.create({
+      user: user._id,
+      name: "To Delete",
+      amount: 50,
+      dueDate: new Date("2026-06-01"),
+      isRecurring: false,
+      recurrence: "monthly",
+      isPaid: false,
+    });
+
+    const res = await request(app).delete(`/api/bills/delete/${bill._id}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ message: "Bill deleted successfully" });
+
+    // Confirm removed from DB
+    const deleted = await Bill.findById(bill._id);
+    expect(deleted).toBeNull();
+  });
+
+  it("should return 404 if the bill is not found", async () => {
+    const mongoose = require("mongoose");
+    const fakeId = new mongoose.Types.ObjectId();
+
+    const res = await request(app).delete(`/api/bills/delete/${fakeId}`);
+
+    expect(res.statusCode).toBe(404);
+    expect(res.body).toEqual({ message: "Bill not found" });
+  });
+
+  it("should return 500 on a server error", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(Bill, "findByIdAndDelete").mockImplementation(() => {
+      throw new Error("Database error");
+    });
+
+    const res = await request(app).delete("/api/bills/delete/someid");
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual({ message: "Server error" });
+  });
+});
+
+// ─── POST /api/bills/add ────────────────────────────────────────────────
+
+describe("POST /api/bills/add", () => {
+  it("should return 201 and the created bill on success", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+
+    const res = await request(app)
+      .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
+      .send({
+        name: "Internet",
+        amount: 50,
+        dueDate: new Date("2026-06-10"),
+        isRecurring: true,
+        recurrence: "monthly",
+        isPaid: false,
+      });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty("name", "Internet");
+    expect(res.body).toHaveProperty("amount", 50);
+    expect(res.body).toHaveProperty("isRecurring", true);
+    expect(res.body).toHaveProperty("recurrence", "monthly");
+    expect(res.body).toHaveProperty("isPaid", false);
+
+    // Confirm it was persisted
+    const saved = await Bill.findById(res.body._id);
+    expect(saved).not.toBeNull();
+    expect(saved.name).toBe("Internet");
+  });
+
+  it("should return 400 if required fields are missing: name, dueDate", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+
+    const res = await request(app)
+      .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
+      .send({ amount: 100 }); // missing name, dueDate
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ message: "Missing required fields" });
+  });
+
+  it("should return 400 if amount is not a valid number", async () => {
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+
+    const res = await request(app)
+      .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
+      .send({
+        name: "Test Bill",
+        amount: "not-a-number",
+        dueDate: new Date("2026-06-01"),
+      });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toEqual({ message: "Amount must be a number" });
+  });
+
+  it("should return 500 on a server error", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    jest.spyOn(Bill, "create").mockImplementation(() => {
+      throw new Error("Database error");
+    });
+
+    const user = await User.create({
+      email: "user1@example.com",
+      password: "password1",
+      firstName: "User",
+      lastName: "One",
+    });
+
+    const res = await request(app)
+      .post("/api/bills/add")
+      .set("x-test-user-id", user._id.toString())
+      .send({
+        name: "Gas",
+        amount: 30,
+        dueDate: new Date("2026-06-01"),
+      });
+
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual({ message: "Server error" });
+  });
+});
