@@ -24,9 +24,24 @@ const getAllUserBills = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
     if (!user) return res.status(404).json({ message: "User not found" });
-    const bills = await Bill.find({ user: req.params.userId }).sort({
-      dueDate: 1,
+
+    const bills = await Bill.find({ user: req.params.userId }).lean();
+
+    // Sort by the relevant due-day field for each recurrence type:
+    //   monthly → recurringDayOfMonth (1–31)
+    //   yearly  → yearlyDueMonth (1–12) as primary, yearlyDueDay (1–31) as secondary
+    bills.sort((a, b) => {
+      const keyA =
+        a.recurrence === "monthly"
+          ? a.recurringDayOfMonth
+          : a.yearlyDueMonth * 100 + a.yearlyDueDay;
+      const keyB =
+        b.recurrence === "monthly"
+          ? b.recurringDayOfMonth
+          : b.yearlyDueMonth * 100 + b.yearlyDueDay;
+      return keyA - keyB;
     });
+
     res.status(200).json(bills);
   } catch (error) {
     console.error("Error fetching bills:", error);
@@ -80,9 +95,18 @@ const getRecurringBills = async (req, res) => {
     const filter = { user: req.params.userId };
     if (req.query.recurrence) filter.recurrence = req.query.recurrence;
 
-    const bills = await Bill.find(filter).sort({
-      recurringDayOfMonth: 1,
-      dueDate: 1,
+    const bills = await Bill.find(filter).lean();
+
+    bills.sort((a, b) => {
+      const keyA =
+        a.recurrence === "monthly"
+          ? a.recurringDayOfMonth
+          : a.yearlyDueMonth * 100 + a.yearlyDueDay;
+      const keyB =
+        b.recurrence === "monthly"
+          ? b.recurringDayOfMonth
+          : b.yearlyDueMonth * 100 + b.yearlyDueDay;
+      return keyA - keyB;
     });
 
     res.status(200).json(bills);
