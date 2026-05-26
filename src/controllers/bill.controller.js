@@ -202,8 +202,6 @@ module.exports = {
   getBill,
   addBill,
   getAllUserBills,
-  getBillsByMonth,
-  getRecurringBills,
   updateBill,
   deleteBill,
 };
