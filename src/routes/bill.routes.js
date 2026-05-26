@@ -9,6 +9,8 @@ const {
   getBill,
   addBill,
   getAllUserBills,
+  getBillsByMonth,
+  getRecurringBills,
   updateBill,
   deleteBill,
 } = require("../controllers/bill.controller");
@@ -16,6 +18,8 @@ const { protect } = require("../middleware/auth.middleware");
 
 router.get("/individual/:id", protect, getBill);
 router.get("/all/:userId", protect, getAllUserBills);
+router.get("/month/:userId", protect, getBillsByMonth); // ?year=YYYY&month=M
+router.get("/recurring/:userId", protect, getRecurringBills);
 router.post("/add", protect, addBill);
 router.put("/update/:id", protect, updateBill);
 router.delete("/delete/:id", protect, deleteBill);

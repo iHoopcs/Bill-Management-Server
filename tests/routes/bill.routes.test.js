@@ -61,8 +61,8 @@ describe("GET /api/bills/individual/:id", () => {
       name: "Electric",
       amount: 75,
       dueDate: new Date("2026-06-01"),
-      isRecurring: true,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
@@ -71,7 +71,6 @@ describe("GET /api/bills/individual/:id", () => {
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty("name", "Electric");
     expect(res.body).toHaveProperty("amount", 75);
-    expect(res.body).toHaveProperty("isRecurring", true);
     expect(res.body).toHaveProperty("recurrence", "monthly");
     expect(res.body).toHaveProperty("isPaid", false);
   });
@@ -115,8 +114,8 @@ describe("GET /api/bills/all/:userId", () => {
         name: "Rent",
         amount: 1200,
         dueDate: new Date("2026-06-01"),
-        isRecurring: true,
         recurrence: "monthly",
+        recurringDayOfMonth: 1,
         isPaid: false,
       },
       {
@@ -124,8 +123,8 @@ describe("GET /api/bills/all/:userId", () => {
         name: "Internet",
         amount: 50,
         dueDate: new Date("2026-06-05"),
-        isRecurring: true,
         recurrence: "monthly",
+        recurringDayOfMonth: 5,
         isPaid: false,
       },
     ]);
@@ -182,8 +181,8 @@ describe("PUT /api/bills/update/:id", () => {
       name: "Old Name",
       amount: 100,
       dueDate: new Date("2026-06-01"),
-      isRecurring: false,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
@@ -239,8 +238,8 @@ describe("DELETE /api/bills/delete/:id", () => {
       name: "To Delete",
       amount: 50,
       dueDate: new Date("2026-06-01"),
-      isRecurring: false,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
@@ -295,15 +294,14 @@ describe("POST /api/bills/add", () => {
         name: "Internet",
         amount: 50,
         dueDate: new Date("2026-06-10"),
-        isRecurring: true,
         recurrence: "monthly",
+        recurringDayOfMonth: 10,
         isPaid: false,
       });
 
     expect(res.statusCode).toBe(201);
     expect(res.body).toHaveProperty("name", "Internet");
     expect(res.body).toHaveProperty("amount", 50);
-    expect(res.body).toHaveProperty("isRecurring", true);
     expect(res.body).toHaveProperty("recurrence", "monthly");
     expect(res.body).toHaveProperty("isPaid", false);
 
@@ -344,7 +342,7 @@ describe("POST /api/bills/add", () => {
       .send({
         name: "Test Bill",
         amount: "not-a-number",
-        dueDate: new Date("2026-06-01"),
+        recurrence: "monthly",
       });
 
     expect(res.statusCode).toBe(400);
@@ -371,6 +369,8 @@ describe("POST /api/bills/add", () => {
         name: "Gas",
         amount: 30,
         dueDate: new Date("2026-06-01"),
+        recurrence: "monthly",
+        recurringDayOfMonth: 1,
       });
 
     expect(res.statusCode).toBe(500);
