@@ -9,6 +9,8 @@ const {
   getBill,
   addBill,
   getAllUserBills,
+  getBillsByMonth,
+  getRecurringBills,
   updateBill,
   deleteBill,
 } = require("../controllers/bill.controller");

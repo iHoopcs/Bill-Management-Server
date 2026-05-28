@@ -95,8 +95,8 @@ describe("getAllUserBills", () => {
         name: "Test Bill 1",
         amount: 100,
         dueDate: new Date("2026-06-15"),
-        isRecurring: false,
         recurrence: "monthly",
+        recurringDayOfMonth: 15,
         isPaid: false,
       },
       {
@@ -104,8 +104,8 @@ describe("getAllUserBills", () => {
         name: "Test Bill 2",
         amount: 200,
         dueDate: new Date("2026-06-15"),
-        isRecurring: true,
         recurrence: "monthly",
+        recurringDayOfMonth: 15,
         isPaid: false,
       },
     ]);
@@ -121,16 +121,12 @@ describe("getAllUserBills", () => {
         expect.objectContaining({
           name: "Test Bill 1",
           amount: 100,
-          dueDate: expect.any(Date),
-          isRecurring: false,
           recurrence: "monthly",
           isPaid: false,
         }),
         expect.objectContaining({
           name: "Test Bill 2",
           amount: 200,
-          dueDate: expect.any(Date),
-          isRecurring: true,
           recurrence: "monthly",
           isPaid: false,
         }),
@@ -167,8 +163,8 @@ describe("getBill", () => {
       name: "Electric",
       amount: 75,
       dueDate: new Date("2026-06-01"),
-      isRecurring: true,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
@@ -182,7 +178,6 @@ describe("getBill", () => {
       expect.objectContaining({
         name: "Electric",
         amount: 75,
-        isRecurring: true,
         recurrence: "monthly",
         isPaid: false,
       }),
@@ -235,8 +230,8 @@ describe("addBill", () => {
         name: "Internet",
         amount: 50,
         dueDate: new Date("2026-06-10"),
-        isRecurring: true,
         recurrence: "monthly",
+        recurringDayOfMonth: 10,
         isPaid: false,
       },
     });
@@ -249,7 +244,6 @@ describe("addBill", () => {
       expect.objectContaining({
         name: "Internet",
         amount: 50,
-        isRecurring: true,
         recurrence: "monthly",
         isPaid: false,
       }),
@@ -289,7 +283,7 @@ describe("addBill", () => {
       body: {
         name: "Test Bill",
         amount: "not-a-number",
-        dueDate: new Date("2026-06-01"),
+        recurrence: "monthly",
       },
     });
     const res = mockRes();
@@ -321,6 +315,8 @@ describe("addBill", () => {
         name: "Gas",
         amount: 30,
         dueDate: new Date("2026-06-01"),
+        recurrence: "monthly",
+        recurringDayOfMonth: 1,
       },
     });
     const res = mockRes();
@@ -347,8 +343,8 @@ describe("updateBill", () => {
       name: "Old Name",
       amount: 100,
       dueDate: new Date("2026-06-01"),
-      isRecurring: false,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
@@ -382,8 +378,8 @@ describe("updateBill", () => {
       name: "Old Name",
       amount: 100,
       dueDate: new Date("2026-06-01"),
-      isRecurring: false,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
@@ -449,8 +445,8 @@ describe("deleteBill", () => {
       name: "To Delete",
       amount: 50,
       dueDate: new Date("2026-06-01"),
-      isRecurring: false,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
@@ -477,8 +473,8 @@ describe("deleteBill", () => {
       name: "To Delete",
       amount: 50,
       dueDate: new Date("2026-06-01"),
-      isRecurring: false,
       recurrence: "monthly",
+      recurringDayOfMonth: 1,
       isPaid: false,
     });
 
