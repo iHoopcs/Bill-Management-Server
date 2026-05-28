@@ -1,5 +1,4 @@
-const User = require("../models/User");
-const Bill = require("../models/Bill");
+const userService = require("./user.service");
 
 /**
  * GET /api/users
@@ -7,11 +6,11 @@ const Bill = require("../models/Bill");
  */
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await userService.getAllUsers();
     res.status(200).json(users);
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "Server error" });
   }
 };
 
@@ -21,12 +20,11 @@ const getAllUsers = async (req, res) => {
  */
 const getUser = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await userService.getUserById(req.user._id);
     res.status(200).json(user);
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(error.statusCode || 500).json({ message: error.statusCode ? error.message : "Server error" });
   }
 };
 

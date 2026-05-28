@@ -14,13 +14,13 @@ const {
   afterAll,
 } = require("@jest/globals");
 const request = require("supertest");
-const User = require("../../src/models/User");
-const Bill = require("../../src/models/Bill");
+const User = require("../../src/modules/users/User");
+const Bill = require("../../src/modules/bills/Bill");
 const db = require("../helpers/db");
 
 // Bypass JWT auth — attaches req.user from x-test-user-id header for protected route tests.
 // Only sets _id (mirrors a decoded JWT payload); the controller is responsible for any DB lookup.
-jest.mock("../../src/middleware/auth.middleware", () => ({
+jest.mock("../../src/api/middleware/auth.middleware", () => ({
   protect: (req, res, next) => {
     const userId = req.headers["x-test-user-id"];
     if (userId) req.user = { _id: userId };
@@ -29,7 +29,7 @@ jest.mock("../../src/middleware/auth.middleware", () => ({
   authLimiter: (req, res, next) => next(),
 }));
 
-const app = require("../../src/index");
+const app = require("../../src/app");
 
 // ─── Setup / Teardown ─────────────────────────────────────────────────────────
 

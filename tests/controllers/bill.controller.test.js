@@ -19,9 +19,9 @@ const {
   getAllUserBills,
   updateBill,
   deleteBill,
-} = require("../../src/controllers/bill.controller");
-const User = require("../../src/models/User");
-const Bill = require("../../src/models/Bill");
+} = require("../../src/modules/bills/bill.controller");
+const User = require("../../src/modules/users/User");
+const Bill = require("../../src/modules/bills/Bill");
 const db = require("../helpers/db");
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────

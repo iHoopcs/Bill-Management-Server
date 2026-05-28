@@ -2,7 +2,7 @@
  * Authentication middleware
  */
 const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+const User = require("../../modules/users/User");
 const rateLimit = require("express-rate-limit");
 
 /**

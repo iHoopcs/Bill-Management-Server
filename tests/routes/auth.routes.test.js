@@ -16,8 +16,8 @@ const {
 const request = require("supertest");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const app = require("../../src/index");
-const User = require("../../src/models/User");
+const app = require("../../src/app");
+const User = require("../../src/modules/users/User");
 const db = require("../helpers/db");
 
 // ─── Setup / Teardown ─────────────────────────────────────────────────────────

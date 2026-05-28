@@ -16,8 +16,8 @@ const {
 const {
   getAllUsers,
   getUser,
-} = require("../../src/controllers/user.controller");
-const User = require("../../src/models/User");
+} = require("../../src/modules/users/user.controller");
+const User = require("../../src/modules/users/User");
 const db = require("../helpers/db");
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────

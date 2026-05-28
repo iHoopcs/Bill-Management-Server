@@ -9,11 +9,9 @@ const {
   getBill,
   addBill,
   getAllUserBills,
-  getBillsByMonth,
-  getRecurringBills,
   updateBill,
   deleteBill,
-} = require("../controllers/bill.controller");
+} = require("../../modules/bills/bill.controller");
 const { protect } = require("../middleware/auth.middleware");
 
 router.get("/individual/:id", protect, getBill);

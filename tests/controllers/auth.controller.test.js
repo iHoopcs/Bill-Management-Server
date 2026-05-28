@@ -18,8 +18,8 @@ const jwt = require("jsonwebtoken");
 const {
   registerUser,
   loginUser,
-} = require("../../src/controllers/auth.controller");
-const User = require("../../src/models/User");
+} = require("../../src/modules/auth/auth.controller");
+const User = require("../../src/modules/users/User");
 const db = require("../helpers/db");
 
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
